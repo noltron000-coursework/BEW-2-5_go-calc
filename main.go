@@ -2,8 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
-	"net/http"
+	"syscall/js"
 )
 
 var (
@@ -11,8 +10,26 @@ var (
 	dir    = flag.String("dir", ".", "directory to serve")
 )
 
+func add(i []js.Value) {
+	js.Global().Set("output", js.ValueOf(i[0].Int()+i[1].Int()))
+	println(js.ValueOf(i[0].Int() + i[1].Int()).String())
+}
+
+func subtract(i []js.Value) {
+	js.Global().Set("output", js.ValueOf(i[0].Int()-i[1].Int()))
+	println(js.ValueOf(i[0].Int() - i[1].Int()).String())
+}
+
+func registerCallbacks() {
+	js.Global().Set("add", js.NewCallback(add))
+	js.Global().Set("subtract", js.NewCallback(subtract))
+}
+
 func main() {
-	flag.Parse()
-	log.Printf("listening on %q...", *listen)
-	log.Fatal(http.ListenAndServe(*listen, http.FileServer(http.Dir(*dir))))
+	c := make(chan struct{}, 0)
+
+	println("WASM Go Initialized")
+	// register functions
+	registerCallbacks()
+	<-c
 }
